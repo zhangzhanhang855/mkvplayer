@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高级 MKV 预览助手</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --bg-color: #f0f2f5;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            padding: 40px;
+        }
+        .card {
+            background: white;
+            width: 100%;
+            max-width: 800px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        }
+        .header { border-bottom: 2px solid #eee; margin-bottom: 20px; padding-bottom: 10px; }
+        
+        /* 视频样式 */
+        .video-wrapper {
+            position: relative;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 20px;
+            display: none; /* 初始隐藏 */
+        }
+        video { width: 100%; display: block; }
+
+        /* 信息面板 */
+        .info-panel {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            font-size: 14px;
+            display: none;
+            text-align: left;
+        }
+        
+        .controls { margin-top: 20px; }
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.8; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="header">
+        <h2>视频预览助手</h2>
+    </div>
+
+    <div class="upload-area">
+        <label for="fileInput" class="btn">选择 MKV 文件</label>
+        <input type="file" id="fileInput" accept=".mkv" style="display:none;">
+    </div>
+
+    <div class="video-wrapper" id="videoWrapper">
+        <video id="mainVideo" controls></video>
+    </div>
+
+    <div class="info-panel" id="infoPanel">
+        <strong>文件详情：</strong>
+        <ul id="detailsList" style="list-style: none; padding: 0; margin: 10px 0 0 0;"></ul>
+        <button class="btn" id="fullScreenBtn" style="margin-top: 10px; background: #333;">全屏观看</button>
+    </div>
+
+    <p id="status" style="color: #666; margin-top: 15px; font-size: 14px;">等待上传...</p>
+</div>
+
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const video = document.getElementById('mainVideo');
+    const wrapper = document.getElementById('videoWrapper');
+    const infoPanel = document.getElementById('infoPanel');
+    const detailsList = document.getElementById('detailsList');
+    const status = document.getElementById('status');
+    const fullScreenBtn = document.getElementById('fullScreenBtn');
+
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // 1. 生成预览 URL
+        const url = URL.createObjectURL(file);
+        
+        // 2. 更新 UI 状态
+        status.textContent = "正在加载文件...";
+        wrapper.style.display = "block";
+        infoPanel.style.display = "block";
+
+        // 3. 设置视频源
+        video.src = url;
+
+        // 4. 填充文件信息
+        const fileSize = (file.size / (1024 * 1024)).toFixed(2) + " MB";
+        detailsList.innerHTML = `
+            <li><strong>文件名:</strong> ${file.name}</li>
+            <li><strong>大小:</strong> ${fileSize}</li>
+            <li><strong>类型:</strong> ${file.type || 'video/x-matroska'}</li>
+        `;
+
+        video.onloadeddata = () => {
+            status.textContent = "预览就绪！";
+        };
+
+        // 错误捕获：如果编码不支持
+        video.onerror = () => {
+            status.innerHTML = "<span style='color:red;'>抱歉，该 MKV 文件的编码格式可能不受浏览器支持（仅支持 H.264/AAC 等常见编码）。</span>";
+        };
+    });
+
+    // 全屏功能
+    fullScreenBtn.onclick = () => {
+        if (video.requestFullscreen) {
+            video.requestFullscreen();
+        } else if (video.webkitRequestFullscreen) { /* Safari */
+            video.webkitRequestFullscreen();
+        }
+    };
+</script>
+
+</body>
+</html>
